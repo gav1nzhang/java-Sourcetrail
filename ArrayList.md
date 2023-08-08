@@ -1,3 +1,5 @@
+
+
 ```java
 
 package java.util;
@@ -10,35 +12,38 @@ import jdk.internal.access.SharedSecrets;
 public class ArrayList<E> extends AbstractList<E>
         implements List<E>, RandomAccess, Cloneable, java.io.Serializable
 {
+    /**
+     * 
+     */
+    
+    /**
+     * 序列化校验的版本号，https://stackoverflow.com/questions/285793/what-is-a-serialversionuid-and-why-should-i-use-it
+     */
     private static final long serialVersionUID = 8683452581122892189L;
 
     /**
-     * Default initial capacity.
+     * 定义初始容量
      */
     private static final int DEFAULT_CAPACITY = 10;
 
     /**
-     * Shared empty array instance used for empty instances.
+     * 空数组用于分享空实例？ 初始化能用到
      */
     private static final Object[] EMPTY_ELEMENTDATA = {};
 
     /**
-     * Shared empty array instance used for default sized empty instances. We
-     * distinguish this from EMPTY_ELEMENTDATA to know how much to inflate when
-     * first element is added.
+     * 默认大小的空实例分享空数组，区分EMPTY_ELEMENTDATA以知道添加元素的时候会膨胀多少
      */
     private static final Object[] DEFAULTCAPACITY_EMPTY_ELEMENTDATA = {};
 
     /**
-     * The array buffer into which the elements of the ArrayList are stored.
-     * The capacity of the ArrayList is the length of this array buffer. Any
-     * empty ArrayList with elementData == DEFAULTCAPACITY_EMPTY_ELEMENTDATA
-     * will be expanded to DEFAULT_CAPACITY when the first element is added.
+     * 这个集合缓冲区存储列表的元素.列表的容量是集合缓冲区的长度。
+     * 当第一个元素被添加，elementData == DEFAULTCAPACITY_EMPTY_ELEMENTDATA将会拓展到			 * DEFAULT_CAPACITY.
      */
-    transient Object[] elementData; // non-private to simplify nested class access
+    transient Object[] elementData; // 非私有，简化嵌套类访问
 
     /**
-     * The size of the ArrayList (the number of elements it contains).
+     * 列表长度 
      *
      * @serial
      */
