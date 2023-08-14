@@ -126,29 +126,34 @@ public class ArrayList<E> extends AbstractList<E>
     private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
 
     /**
-     * Increases the capacity to ensure that it can hold at least the
-     * number of elements specified by the minimum capacity argument.
+     * 提升容量，确保至少能增长到minCapacity
      *
-     * @param minCapacity the desired minimum capacity
-     * @throws OutOfMemoryError if minCapacity is less than zero
+     * @param minCapacity 所需最小容量
+     * @throws OutOfMemoryError OOM，超出可以拓展的栈 - jvm
      */
     private Object[] grow(int minCapacity) {
         return elementData = Arrays.copyOf(elementData,
                                            newCapacity(minCapacity));
     }
-
+	
+    /**
+     * 无参数时，增长当前size+1
+     */
     private Object[] grow() {
         return grow(size + 1);
     }
 
     /**
-     * Returns a capacity at least as large as the given minimum capacity.
-     * Returns the current capacity increased by 50% if that suffices.
-     * Will not return a capacity greater than MAX_ARRAY_SIZE unless
-     * the given minimum capacity is greater than MAX_ARRAY_SIZE.
+     * 返回一个容量，至少跟给的最小 minCapacity 一样大
+     * 如果足够(suffices)， 提升至少50%当前的数量 (位运算向右移一位 0100 -> 0010 从4变2)
+     * 不会比列表最长长度还长(MAX_ARRAY_SIZE)
      *
      * @param minCapacity the desired minimum capacity
      * @throws OutOfMemoryError if minCapacity is less than zero
+     * old 原先列表元素长度
+     * new 1.5倍old
+     * 如果newCapacity - minCapacity <= 0，且长度为0，返回Default（10），如果长度小于0，抛出
+     * 正常流程，如果new - 最长长度 <=0 说明正常 返回new，否则huge容量
      */
     private int newCapacity(int minCapacity) {
         // overflow-conscious code
@@ -166,6 +171,12 @@ public class ArrayList<E> extends AbstractList<E>
             : hugeCapacity(minCapacity);
     }
 
+    /**
+     * 增加容量
+     * @params minCapacity 小于0 抛出
+     * 看容量是否大于MAX_ARRAY_SIZE, 大于置为Integer.MAX_VALUE(真实的 最长长度，对象头都不要了)
+     * 
+     */
     private static int hugeCapacity(int minCapacity) {
         if (minCapacity < 0) // overflow
             throw new OutOfMemoryError();
@@ -175,7 +186,7 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Returns the number of elements in this list.
+     * 返回当前List元素数量
      *
      * @return the number of elements in this list
      */
@@ -184,7 +195,7 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Returns {@code true} if this list contains no elements.
+     * 返回 True/False，以当前列表容量是否为0作为判断
      *
      * @return {@code true} if this list contains no elements
      */
