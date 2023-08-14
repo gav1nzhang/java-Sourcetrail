@@ -50,12 +50,10 @@ public class ArrayList<E> extends AbstractList<E>
     private int size;
 
     /**
-     * Constructs an empty list with the specified initial capacity.
-     *
-     * @param  initialCapacity  the initial capacity of the list
-     * @throws IllegalArgumentException if the specified initial capacity
-     *         is negative
-     */
+ 	* 初始化ArrayList
+ 	* @params 参数 initalCapacity
+ 	* @throws 小于0时抛出
+ 	*/
     public ArrayList(int initialCapacity) {
         if (initialCapacity > 0) {
             this.elementData = new Object[initialCapacity];
@@ -68,19 +66,16 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Constructs an empty list with an initial capacity of ten.
+     * 构造空函数使用预先定义的空实例
      */
     public ArrayList() {
         this.elementData = DEFAULTCAPACITY_EMPTY_ELEMENTDATA;
     }
 
     /**
-     * Constructs a list containing the elements of the specified
-     * collection, in the order they are returned by the collection's
-     * iterator.
-     *
-     * @param c the collection whose elements are to be placed into this list
-     * @throws NullPointerException if the specified collection is null
+     * 使用其他Collection集合框架来构建ArrayList，并判断size是否为0，然后进行CopyOf
+     * @param 集合框架中
+     * @throws 如果为null，替换空集合
      */
     public ArrayList(Collection<? extends E> c) {
         elementData = c.toArray();
@@ -96,9 +91,8 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Trims the capacity of this {@code ArrayList} instance to be the
-     * list's current size.  An application can use this operation to minimize
-     * the storage of an {@code ArrayList} instance.
+     * 修正当前ArrayList容量，调整当前List大小，最小化实例当前List
+     * 当size小于元素长度，size为0时 元素替换为空，否则以size CopyOf
      */
     public void trimToSize() {
         modCount++;
@@ -110,11 +104,10 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Increases the capacity of this {@code ArrayList} instance, if
-     * necessary, to ensure that it can hold at least the number of elements
-     * specified by the minimum capacity argument.
+     * 如果必要的话，提升当前ArrayList实例的容量, 确保 至少容纳minCapacity的数量
      *
-     * @param minCapacity the desired minimum capacity
+     * @param minCapacity 所需最小容量
+     * 如果min 大于 当前元素长度 且 不会空 且 不小于 10 跳入grow，开始增长
      */
     public void ensureCapacity(int minCapacity) {
         if (minCapacity > elementData.length
@@ -126,10 +119,9 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * The maximum size of array to allocate (unless necessary).
-     * Some VMs reserve some header words in an array.
-     * Attempts to allocate larger arrays may result in
-     * OutOfMemoryError: Requested array size exceeds VM limit
+     * 最长度为0x7fffffff (2^31 - 1) - 8 
+	 * https://stackoverflow.com/questions/35756277/why-the-maximum-array-size-of-arraylist-is-integer-max-value-8
+	 * 对象头不能超过8个字节，所以-8
      */
     private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
 
