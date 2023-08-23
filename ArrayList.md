@@ -204,29 +204,25 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Returns {@code true} if this list contains the specified element.
-     * More formally, returns {@code true} if and only if this list contains
-     * at least one element {@code e} such that
-     * {@code Objects.equals(o, e)}.
-     *
-     * @param o element whose presence in this list is to be tested
-     * @return {@code true} if this list contains the specified element
+     * 如果列表存在需要寻找的值或有多个需要寻找的值，返回true
      */
     public boolean contains(Object o) {
         return indexOf(o) >= 0;
     }
 
     /**
-     * Returns the index of the first occurrence of the specified element
-     * in this list, or -1 if this list does not contain the element.
-     * More formally, returns the lowest index {@code i} such that
-     * {@code Objects.equals(o, get(i))},
-     * or -1 if there is no such index.
+     * 返回在列表第一个出现的元素的索引值，不存在返回-1，
+     * 准确说，反应最低位(第一次出现)的index，不存在返回-1
      */
     public int indexOf(Object o) {
         return indexOfRange(o, 0, size);
     }
-
+    
+	/**
+     * param o 元素 start 起始位 end 终止位
+     * 如果元素为空，那么遍历数组缓冲区，发现第一个为null的返回下标
+	 * equals若未重写，则判断两个对象是否引用指向同一个对象，或者说 检查对象是否指向内存的同一个地址
+     */
     int indexOfRange(Object o, int start, int end) {
         Object[] es = elementData;
         if (o == null) {
@@ -255,7 +251,11 @@ public class ArrayList<E> extends AbstractList<E>
     public int lastIndexOf(Object o) {
         return lastIndexOfRange(o, 0, size);
     }
-
+	
+    /**
+     * 与indexOfRange基本相同，只是倒序查找
+     * 寻找最高位的element
+     */
     int lastIndexOfRange(Object o, int start, int end) {
         Object[] es = elementData;
         if (o == null) {
@@ -275,10 +275,9 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Returns a shallow copy of this {@code ArrayList} instance.  (The
-     * elements themselves are not copied.)
-     *
-     * @return a clone of this {@code ArrayList} instance
+     * 返回一个浅克隆的ArrayList实例
+     * 元素本身不会被复制
+     * @return ArrayList实例的克隆
      */
     public Object clone() {
         try {
@@ -293,15 +292,12 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Returns an array containing all of the elements in this list
-     * in proper sequence (from first to last element).
+     * 返回一个数组，里面包含了这个列表所有元素，并且以正确顺序排列(从第一个到最后一个)
      *
-     * <p>The returned array will be "safe" in that no references to it are
-     * maintained by this list.  (In other words, this method must allocate
-     * a new array).  The caller is thus free to modify the returned array.
-     *
-     * <p>This method acts as bridge between array-based and collection-based
-     * APIs.
+     * 这个返回的数组是"安全的"，列表不会对它引用进行维护(就是生成一个新数组)
+     * 调用方可以随意修改返回的数组
+     * 
+     * 这个方法是作为 基于数组 和 基于列表的一个 桥梁?
      *
      * @return an array containing all of the elements in this list in
      *         proper sequence
