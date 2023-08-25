@@ -307,28 +307,20 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Returns an array containing all of the elements in this list in proper
-     * sequence (from first to last element); the runtime type of the returned
-     * array is that of the specified array.  If the list fits in the
-     * specified array, it is returned therein.  Otherwise, a new array is
-     * allocated with the runtime type of the specified array and the size of
-     * this list.
+     * 返回一个数组包含了以正常顺序的列表全部元素(从第一个到最后一个)
+     * 返回数组的运行时类型是 指定数组的运行时类型
+     * 否则，将分配一个具有指定运行时类型 以及 此列表大小的数组
      *
-     * <p>If the list fits in the specified array with room to spare
-     * (i.e., the array has more elements than the list), the element in
-     * the array immediately following the end of the collection is set to
-     * {@code null}.  (This is useful in determining the length of the
-     * list <i>only</i> if the caller knows that the list does not contain
-     * any null elements.)
+     * 如果列表适合指定列表，并腾出的多余空间(比如数组元素比列表更多)，
+     * 那么立即，数组跟随着列表最后一个元素后，都置为null(如果调用方知道list没包含null元素，这是很有用的对于确定list长度)
      *
-     * @param a the array into which the elements of the list are to
-     *          be stored, if it is big enough; otherwise, a new array of the
-     *          same runtime type is allocated for this purpose.
-     * @return an array containing the elements of the list
-     * @throws ArrayStoreException if the runtime type of the specified array
-     *         is not a supertype of the runtime type of every element in
-     *         this list
-     * @throws NullPointerException if the specified array is null
+     * @param a 这个列表将把所有list的元素存储起来, 如果它足够大，否则，分配一个相同运行时类型的新数组
+     * @return 一个数组，包含了list的元素
+     * @throws ArrayStoreException 如果指定数组的运行时类型 不是 list每个元素的运行时类型的超类
+     *         例如 ArrayList LinkedList -> List
+     * @throws NullPointerException 抛出空指针 如果指定数组为null
+     * @SuppressWarnings 注解可以用于抑制编译器产生的警告信息，包括但不限于未检查的转换、未检查的方法调用、未检查的参数、未检查的返回值类型、非法注释、过时的方法等。
+     * systeam.arrayCopy(留意一下 很重要)
      */
     @SuppressWarnings("unchecked")
     public <T> T[] toArray(T[] a) {
@@ -342,6 +334,7 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     // Positional Access Operations
+    // 位置访问操作
 
     @SuppressWarnings("unchecked")
     E elementData(int index) {
@@ -354,11 +347,11 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Returns the element at the specified position in this list.
+     * 返回列表中元素的指定位置
      *
-     * @param  index index of the element to return
-     * @return the element at the specified position in this list
-     * @throws IndexOutOfBoundsException {@inheritDoc}
+     * @param  index 要返回元素的index
+     * @return 返回列表中元素的指定位置
+     * @throws IndexOutOfBoundsException {@inheritDoc} 越界报错
      */
     public E get(int index) {
         Objects.checkIndex(index, size);
@@ -366,13 +359,12 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Replaces the element at the specified position in this list with
-     * the specified element.
+     * 以指定元素 替换当前列表指定位置元素的值
      *
-     * @param index index of the element to replace
-     * @param element element to be stored at the specified position
-     * @return the element previously at the specified position
-     * @throws IndexOutOfBoundsException {@inheritDoc}
+     * @param index 要替换元素的index
+     * @param element 元素被存储指定位置
+     * @return 之前在指定位置元素的值
+     * @throws IndexOutOfBoundsException {@inheritDoc} 越界报错
      */
     public E set(int index, E element) {
         Objects.checkIndex(index, size);
@@ -382,9 +374,9 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * This helper method split out from add(E) to keep method
-     * bytecode size under 35 (the -XX:MaxInlineSize default value),
-     * which helps when add(E) is called in a C1-compiled loop.
+     * 则个帮助方法 分离出来add(E),以保持字节码大小 小于 35 (-XX:MaxInlineSize 默认值)
+     * 在c1编译循环中调用add(E) 有用(待补充)
+     * 如果s == 总长度 调grow 否则 当前s位置为e 总长度+1
      */
     private void add(E e, Object[] elementData, int s) {
         if (s == elementData.length)
