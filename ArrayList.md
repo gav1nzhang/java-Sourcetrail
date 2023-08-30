@@ -386,9 +386,10 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Appends the specified element to the end of this list.
-     *
-     * @param e element to be appended to this list
+     * 在列表尾部添加一个指定元素
+     *  
+     * modCount AbstractList中有写 结构修改次数
+     * @param e 被添加到列表的元素
      * @return {@code true} (as specified by {@link Collection#add})
      */
     public boolean add(E e) {
@@ -398,13 +399,14 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Inserts the specified element at the specified position in this
-     * list. Shifts the element currently at that position (if any) and
-     * any subsequent elements to the right (adds one to their indices).
-     *
-     * @param index index at which the specified element is to be inserted
-     * @param element element to be inserted
-     * @throws IndexOutOfBoundsException {@inheritDoc}
+     * 在列表的指定位置插入指定元素，将当前位于该位置的元素(如果有)和任意的后续元素向右移动
+     * 将元素添加到索引内
+     * 
+     * 判断range范围是否越界 -> 增加结构修改次数 ->定义 参数 是否grow 然后copy
+     * 
+     * @param index 指定元素在列表中要被插入的位置
+     * @param element 被插入的元素
+     * @throws IndexOutOfBoundsException {@inheritDoc} 越界
      */
     public void add(int index, E element) {
         rangeCheckForAdd(index);
@@ -421,13 +423,13 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Removes the element at the specified position in this list.
-     * Shifts any subsequent elements to the left (subtracts one from their
-     * indices).
+     * 移除列表中指定位置上的元素 移动后续元素向左(索引中减去一个)
+     * 
+     * objects 检查索引是否越界 未检查suppressWarning在前面
      *
-     * @param index the index of the element to be removed
-     * @return the element that was removed from the list
-     * @throws IndexOutOfBoundsException {@inheritDoc}
+     * @param index 被溢出的元素的位置
+     * @return 被移除的元素
+     * @throws IndexOutOfBoundsException {@inheritDoc} 越界
      */
     public E remove(int index) {
         Objects.checkIndex(index, size);
@@ -440,6 +442,11 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
+     * 重写equals
+     * 列表相同 true
+     * equals对象不为List类 false
+     * ArrayList可以被子类化并赋予任意行为，但可以处理常见情况（虽然不知道什么意思）
+     * 校验期待的修改次数有无更改
      * {@inheritDoc}
      */
     public boolean equals(Object o) {
@@ -461,7 +468,12 @@ public class ArrayList<E> extends AbstractList<E>
         checkForComodification(expectedModCount);
         return equal;
     }
-
+	
+    /**
+     * 与List进行范围比较equals 
+     * 首先看to 是否越界 否则抛出异常(但没具体报错?)
+     * 然后进行迭代器，去判断是否有下一个，或者是否当前迭代器是否相同 否则返回false
+     */
     boolean equalsRange(List<?> other, int from, int to) {
         final Object[] es = elementData;
         if (to > es.length) {
@@ -476,6 +488,13 @@ public class ArrayList<E> extends AbstractList<E>
         return !oit.hasNext();
     }
 
+    
+    /**
+     * 比较ArrayList列表
+     * 记录modCount，size 
+     * 首先比较size 然后比较大小是否越界，然后一个个去对比元素 false跳出
+     * 最后再check一下是否有改动
+     */
     private boolean equalsArrayList(ArrayList<?> other) {
         final int otherModCount = other.modCount;
         final int s = size;
@@ -496,7 +515,11 @@ public class ArrayList<E> extends AbstractList<E>
         other.checkForComodification(otherModCount);
         return equal;
     }
-
+	
+    /**
+     * 检查是否有改动，改动数不一样 抛出异常 
+     * Constructs a ConcurrentModificationException with no detail message..(报错的备注)
+     */
     private void checkForComodification(final int expectedModCount) {
         if (modCount != expectedModCount) {
             throw new ConcurrentModificationException();
@@ -504,6 +527,8 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
+     * 重写hashCode 那么注意 hashcode相同 一定相同，hashcode不相同 一定不相同
+     * equals不必然
      * {@inheritDoc}
      */
     public int hashCode() {
@@ -512,7 +537,11 @@ public class ArrayList<E> extends AbstractList<E>
         checkForComodification(expectedModCount);
         return hash;
     }
-
+	
+    /**
+     * hashCode范围 从form 到 to
+     * 首先还是比长度抛出异常，后来每次倍乘31 + 元素e的hashCode
+     */
     int hashCodeRange(int from, int to) {
         final Object[] es = elementData;
         if (to > es.length) {
