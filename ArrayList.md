@@ -13,6 +13,16 @@ public class ArrayList<E> extends AbstractList<E>
         implements List<E>, RandomAccess, Cloneable, java.io.Serializable
 {
     /**
+     * 此处用来放一些系统Utils方法，如System.arrayCopy
+	 * void arraycopy(Object src, int srcPos, Object dest, int destPos, int    		 * length)
+     * src 源数组，起始位置，目标数组，目标数组的起始位置，复制元素的数量
+     * 至于分析源码，此方法底层用c++写的，jvm_arrayCopy里也只是说明了简单的检测，而非真正
+     * 的复制代码 pd_conjoint_oops_atomic(真正的复制方法)
+     *
+     * 
+     * 
+     * 
+     * 
      * 
      */
     
@@ -556,17 +566,14 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Removes the first occurrence of the specified element from this list,
-     * if it is present.  If the list does not contain the element, it is
-     * unchanged.  More formally, removes the element with the lowest index
+     * 移除列表中的指定元素(如果存在，则第一个)，如果列表不包含元素，那么不改变，移除最低位(最前的)
      * {@code i} such that
      * {@code Objects.equals(o, get(i))}
-     * (if such an element exists).  Returns {@code true} if this list
-     * contained the specified element (or equivalently, if this list
-     * changed as a result of the call).
+     * 如果存在元素，返回true(如果列表因调用更改，也返回true)
+     * 如果为null，找有没有为null的，返回这个found(闭包?),包含的时候，移除最低位，返回true
      *
-     * @param o element to be removed from this list, if present
-     * @return {@code true} if this list contained the specified element
+     * @param o 如果存在，移除列表中元素
+     * @return {@code true} 列表是否包含要移除的元素
      */
     public boolean remove(Object o) {
         final Object[] es = elementData;
@@ -589,8 +596,8 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Private remove method that skips bounds checking and does not
-     * return the value removed.
+     * 结构修改次数+1，预定义-1后的size，找到指定位置i，进行copy，将为之后的元素移前面
+     * 最后一个元素置为null 避免空引用
      */
     private void fastRemove(Object[] es, int i) {
         modCount++;
@@ -601,8 +608,7 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Removes all of the elements from this list.  The list will
-     * be empty after this call returns.
+     * 移除列表中所有元素.  调用后列表为空
      */
     public void clear() {
         modCount++;
@@ -612,17 +618,15 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Appends all of the elements in the specified collection to the end of
-     * this list, in the order that they are returned by the
-     * specified collection's Iterator.  The behavior of this operation is
-     * undefined if the specified collection is modified while the operation
-     * is in progress.  (This implies that the behavior of this call is
-     * undefined if the specified collection is this list, and this
-     * list is nonempty.)
+     * 在列表的尾部添加指定集合的所有元素，按照指定集合的迭代器返回顺序(就原来啥样，导入就啥		 * 样)，如果在In Prgs时，修改了指定集合，那么这个行为将变成undefined. 意味着这个指定集	   * 合在列表中的行为是未定义的，列表且不为空
      *
-     * @param c collection containing elements to be added to this list
-     * @return {@code true} if this list changed as a result of the call
-     * @throws NullPointerException if the specified collection is null
+     * 先转换集合，修改次数+1，判断长度。定义elementData，判断新集合长度 如果大于当前列表的
+     * 长度(elememtData 长度初始为10 每次扩充1.5倍) 减去实际的长度，那么就说明 原来列表
+     * 长度不够，需要扩充
+     * 
+     * @param c 包含将要被添加到列表中的集合
+     * @return {@code true} 如果列表因调用而更改
+     * @throws NullPointerException 如果指定集合为空
      */
     public boolean addAll(Collection<? extends E> c) {
         Object[] a = c.toArray();
@@ -640,19 +644,15 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Inserts all of the elements in the specified collection into this
-     * list, starting at the specified position.  Shifts the element
-     * currently at that position (if any) and any subsequent elements to
-     * the right (increases their indices).  The new elements will appear
-     * in the list in the order that they are returned by the
-     * specified collection's iterator.
+     * 在列表指定位置中插入指定集合的素有元素，将位于该位置及后面的元素移动，这个新元素将按照指      * 定集合的迭代器顺序排列
      *
-     * @param index index at which to insert the first element from the
-     *              specified collection
-     * @param c collection containing elements to be added to this list
-     * @return {@code true} if this list changed as a result of the call
-     * @throws IndexOutOfBoundsException {@inheritDoc}
-     * @throws NullPointerException if the specified collection is null
+     * 先校验添加的索引，小于0 大于size，报越界错误，然后如上面的addall一样，常规操作
+     *
+     * @param index 索引，在此插入指定元素的第一个元素
+     * @param c 包含所有要添加进列表的集合
+     * @return {@code true} 如果列表调用而更改
+     * @throws IndexOutOfBoundsException {@inheritDoc} 索引越界
+     * @throws NullPointerException  如果集合为空
      */
     public boolean addAll(int index, Collection<? extends E> c) {
         rangeCheckForAdd(index);
@@ -678,11 +678,11 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Removes from this list all of the elements whose index is between
-     * {@code fromIndex}, inclusive, and {@code toIndex}, exclusive.
-     * Shifts any succeeding elements to the left (reduces their index).
-     * This call shortens the list by {@code (toIndex - fromIndex)} elements.
-     * (If {@code toIndex==fromIndex}, this operation has no effect.)
+     * 移除列表中从formIndex到toIndex的元素，把随后的元素往左移(减去索引)，这个调用
+     * 将缩短 toIndex - formIndex个元素列表，如果两者相等则无影响
+     * 
+     * formIndex > toIndex 越界错误，修改次数+1，移动(核心还是system.arrayCopy)
+     *
      *
      * @throws IndexOutOfBoundsException if {@code fromIndex} or
      *         {@code toIndex} is out of range
@@ -699,7 +699,7 @@ public class ArrayList<E> extends AbstractList<E>
         shiftTailOverGap(elementData, fromIndex, toIndex);
     }
 
-    /** Erases the gap from lo to hi, by sliding down following elements. */
+    /** 滑动元素 填补空隙 */
     private void shiftTailOverGap(Object[] es, int lo, int hi) {
         System.arraycopy(es, hi, es, lo, size - hi);
         for (int to = size, i = (size -= hi - lo); i < to; i++)
@@ -707,7 +707,7 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * A version of rangeCheck used by add and addAll.
+     * 检查add addAll是否越界的方法
      */
     private void rangeCheckForAdd(int index) {
         if (index > size || index < 0)
@@ -715,16 +715,15 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Constructs an IndexOutOfBoundsException detail message.
-     * Of the many possible refactorings of the error handling code,
-     * this "outlining" performs best with both server and client VMs.
+     * 构建一个 索引越界异常的详细信息.
+     * 在所有重构中，这个方法在服务器与VM里性能最好
      */
     private String outOfBoundsMsg(int index) {
         return "Index: "+index+", Size: "+size;
     }
 
     /**
-     * A version used in checking (fromIndex > toIndex) condition
+     * 重载，用于检查removeRange
      */
     private static String outOfBoundsMsg(int fromIndex, int toIndex) {
         return "From Index: " + fromIndex + " > To Index: " + toIndex;
