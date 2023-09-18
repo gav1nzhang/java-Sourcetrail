@@ -730,44 +730,44 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Removes from this list all of its elements that are contained in the
-     * specified collection.
+     * 移除列表中 包含指定集合元素 的所有元素
      *
-     * @param c collection containing elements to be removed from this list
-     * @return {@code true} if this list changed as a result of the call
-     * @throws ClassCastException if the class of an element of this list
-     *         is incompatible with the specified collection
-     * (<a href="Collection.html#optional-restrictions">optional</a>)
-     * @throws NullPointerException if this list contains a null element and the
-     *         specified collection does not permit null elements
-     * (<a href="Collection.html#optional-restrictions">optional</a>),
-     *         or if the specified collection is null
-     * @see Collection#contains(Object)
+     * @param c 包含将要从列表中去除的元素集合
+     * @return {@code true} 是否列表因调用而改变
+     * @throws ClassCastException 如果列表元素与集合元素类不相同(optional)
+     * @throws NullPointerException 如果列表包含null，且集合不允许null 或者指定的
+     * 集合为null
+     * 
+     * 代码分析留在下方
+     * @see Collection.contains(Object)
      */
     public boolean removeAll(Collection<?> c) {
         return batchRemove(c, false, 0, size);
     }
 
     /**
-     * Retains only the elements in this list that are contained in the
-     * specified collection.  In other words, removes from this list all
-     * of its elements that are not contained in the specified collection.
+     * 仅保留此列表中包含在指定集合中的元素.
+     * 换句话说，去除列表中所有不包含指定集合的元素
      *
-     * @param c collection containing elements to be retained in this list
-     * @return {@code true} if this list changed as a result of the call
-     * @throws ClassCastException if the class of an element of this list
-     *         is incompatible with the specified collection
-     * (<a href="Collection.html#optional-restrictions">optional</a>)
-     * @throws NullPointerException if this list contains a null element and the
-     *         specified collection does not permit null elements
-     * (<a href="Collection.html#optional-restrictions">optional</a>),
-     *         or if the specified collection is null
-     * @see Collection#contains(Object)
+     * @param c 包含要保留在此列表中的元素的集合
+     * @return {@code true} 如果此列表因调用而更改
+     * @throws ClassCastException 如果此列表元素的类与指定的集合不兼容
+     * @throws NullPointerException 如果此列表包含 null 元素，并且指定的集合不允许 		 * null 元素（可选），或者指定的集合为 null
+     * @see Collection.contains(Object)
      */
     public boolean retainAll(Collection<?> c) {
         return batchRemove(c, true, 0, size);
     }
 
+    /**
+     * param 集合c， boolean complement 是删还是保留，删false，保留true, form end
+     * 
+     * 首先检验是否为null，然后初始化赋值给es，为survivors进行初始化，form到end循环，
+     * 看包不包含，用来截取第一位，也就是开始的位置
+     * 符合complement的时候再进行赋新值，但这个时候也要保持与AbstractCollection的兼容性
+     * 即使抛出异常
+     * 接着增加结构修改次数，滑动补充空隙。
+     */
     boolean batchRemove(Collection<?> c, boolean complement,
                         final int from, final int end) {
         Objects.requireNonNull(c);
