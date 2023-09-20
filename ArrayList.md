@@ -14,15 +14,16 @@ public class ArrayList<E> extends AbstractList<E>
 {
     /**
      * 此处用来放一些系统Utils方法，如System.arrayCopy
+     * 
 	 * void arraycopy(Object src, int srcPos, Object dest, int destPos, int    		 * length)
      * src 源数组，起始位置，目标数组，目标数组的起始位置，复制元素的数量
      * 至于分析源码，此方法底层用c++写的，jvm_arrayCopy里也只是说明了简单的检测，而非真正
      * 的复制代码 pd_conjoint_oops_atomic(真正的复制方法)
      *
      * 
-     * 
-     * 
-     * 
+     * fail-fast: 一个系统通用设计思想，并非java独有机制，检测到可能发生错误，就立马抛出异常 
+     * https://www.cnblogs.com/54chensongxia/p/12470446.html 详见介绍
+     * inheritDoc: java注释标记，指示子类或实现类继承父类/接口的注释，会自动复制 保证了一致性
      * 
      */
     
@@ -799,8 +800,10 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Saves the state of the {@code ArrayList} instance to a stream
-     * (that is, serializes it).
+     * 将ArrayList实例的状态保存到流中(序列化)
+     *
+     * 记录修改次数,元素数量,写入流中,把所有元素以正常顺序写入
+     * 
      *
      * @param s the stream
      * @throws java.io.IOException if an I/O error occurs
@@ -828,8 +831,7 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Reconstitutes the {@code ArrayList} instance from a stream (that is,
-     * deserializes it).
+     * 从流中重新构造ArrayList实例(反序列化)
      * @param s the stream
      * @throws ClassNotFoundException if the class of a serialized object
      *         could not be found
@@ -863,16 +865,13 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Returns a list iterator over the elements in this list (in proper
-     * sequence), starting at the specified position in the list.
-     * The specified index indicates the first element that would be
-     * returned by an initial call to {@link ListIterator#next next}.
-     * An initial call to {@link ListIterator#previous previous} would
-     * return the element with the specified index minus one.
+     * 返回一个以正常顺序的列表迭代器, 从列表的指定位置开始
+     * 这个指定索引表明了调用返回的第一个元素, 对next返回下一个，对previous返回上一个
+     * 
      *
-     * <p>The returned list iterator is <a href="#fail-fast"><i>fail-fast</i></a>.
+     * fail-fast快速检查机制 贴到md最开头了
      *
-     * @throws IndexOutOfBoundsException {@inheritDoc}
+     * @throws IndexOutOfBoundsException {@inheritDoc} 越界异常
      */
     public ListIterator<E> listIterator(int index) {
         rangeCheckForAdd(index);
@@ -880,10 +879,9 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Returns a list iterator over the elements in this list (in proper
-     * sequence).
+     * 返回此列表中元素的列表迭代器（按正确的顺序）。
      *
-     * <p>The returned list iterator is <a href="#fail-fast"><i>fail-fast</i></a>.
+     * fail-fast
      *
      * @see #listIterator(int)
      */
@@ -892,9 +890,9 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Returns an iterator over the elements in this list in proper sequence.
+     * 按正确的顺序返回此列表中元素的迭代器。
      *
-     * <p>The returned iterator is <a href="#fail-fast"><i>fail-fast</i></a>.
+     * fail-fast
      *
      * @return an iterator over the elements in this list in proper sequence
      */
@@ -903,20 +901,25 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * An optimized version of AbstractList.Itr
+     * AbstractList.Itr优化版本
      */
     private class Itr implements Iterator<E> {
-        int cursor;       // index of next element to return
-        int lastRet = -1; // index of last element returned; -1 if no such
-        int expectedModCount = modCount;
+        int cursor;       // 下一个要返回的索引
+        int lastRet = -1; // 上一个返回的索引，初始化在0的前面 lastRet=-1表示此位置无元素，lastRet表示此位						 //	置有元素
+        int expectedModCount = modCount; // expected 记录Iterator的操作次数
 
-        // prevent creating a synthetic constructor
+        // 无参构造
         Itr() {}
 
         public boolean hasNext() {
             return cursor != size;
         }
 
+        /**
+         * i作为要返回的索引，大于等于size 显示 NoSuchElement报错
+         * 然后赋值element, 再进行一次比较，cursor+1 返回元素
+         * lastRet = i 即游标分为上一个跟下一个
+         */
         @SuppressWarnings("unchecked")
         public E next() {
             checkForComodification();
@@ -930,6 +933,10 @@ public class ArrayList<E> extends AbstractList<E>
             return (E) elementData[lastRet = i];
         }
 
+        /**
+         * 移除 如果最后一个元素索引<0 报错，检查修改次数
+         * 然后list remove这个元素,cursor = 元素索引, 期间越界报错
+         */
         public void remove() {
             if (lastRet < 0)
                 throw new IllegalStateException();
@@ -945,6 +952,9 @@ public class ArrayList<E> extends AbstractList<E>
             }
         }
 
+        /**
+         * 定义size为元素数量,i = 下一个返回索引，照常校验,结束时更新一次减少堆写入
+         */
         @Override
         public void forEachRemaining(Consumer<? super E> action) {
             Objects.requireNonNull(action);
@@ -970,7 +980,7 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * An optimized version of AbstractList.ListItr
+     * 大致与上面一样 摆了
      */
     private class ListItr extends Itr implements ListIterator<E> {
         ListItr(int index) {
