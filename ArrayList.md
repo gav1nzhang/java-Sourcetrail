@@ -25,6 +25,7 @@ public class ArrayList<E> extends AbstractList<E>
      * https://www.cnblogs.com/54chensongxia/p/12470446.html 详见介绍
      * inheritDoc: java注释标记，指示子类或实现类继承父类/接口的注释，会自动复制 保证了一致性
      * 
+     * modCount != expectedModCount 并发修改
      */
     
     /**
@@ -1041,30 +1042,19 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Returns a view of the portion of this list between the specified
-     * {@code fromIndex}, inclusive, and {@code toIndex}, exclusive.  (If
-     * {@code fromIndex} and {@code toIndex} are equal, the returned list is
-     * empty.)  The returned list is backed by this list, so non-structural
-     * changes in the returned list are reflected in this list, and vice-versa.
-     * The returned list supports all of the optional list operations.
+   	 * 返回一个指定元素之间的(fromIndex->toIndex)之间的列表切片,如果这俩索引相等则返回空
+     * 这个返回的列表由本身的列表支持,所以没有什么结构上的改变，反之亦然，返回的列表也支持原来列表
+     * 的操作(不确定对不对)
+     * 这个方法消除了对显式范围的需要(类似数组的 [1],[2],[3]等 直接拿数据)
+     * 任何需要列表的操作都可以传递子列表视图 而不是整个列表来范围操作 
+     * 例如下例，去除了一部分元素
+     * 
+     * list.subList(from, to).clear();
+     * 
+     * 可以为indexOf和lastIndexof构建相同的idioms，所有函数 list能用的 子list也能用
      *
-     * <p>This method eliminates the need for explicit range operations (of
-     * the sort that commonly exist for arrays).  Any operation that expects
-     * a list can be used as a range operation by passing a subList view
-     * instead of a whole list.  For example, the following idiom
-     * removes a range of elements from a list:
-     * <pre>
-     *      list.subList(from, to).clear();
-     * </pre>
-     * Similar idioms may be constructed for {@link #indexOf(Object)} and
-     * {@link #lastIndexOf(Object)}, and all of the algorithms in the
-     * {@link Collections} class can be applied to a subList.
-     *
-     * <p>The semantics of the list returned by this method become undefined if
-     * the backing list (i.e., this list) is <i>structurally modified</i> in
-     * any way other than via the returned list.  (Structural modifications are
-     * those that change the size of this list, or otherwise perturb it in such
-     * a fashion that iterations in progress may yield incorrect results.)
+     * 如果支持列表(原列表)以返回的列表以外的任何方式进行结构修正，那么将变得undefined(不能进行结构上的更改)
+     * 结构更改意思是 比如更改大小，或者其他方式干扰，可能会导致出错
      *
      * @throws IndexOutOfBoundsException {@inheritDoc}
      * @throws IllegalArgumentException {@inheritDoc}
@@ -1074,6 +1064,7 @@ public class ArrayList<E> extends AbstractList<E>
         return new SubList<>(this, fromIndex, toIndex);
     }
 
+    // subList的定义
     private static class SubList<E> extends AbstractList<E> implements RandomAccess {
         private final ArrayList<E> root;
         private final SubList<E> parent;
@@ -1081,7 +1072,7 @@ public class ArrayList<E> extends AbstractList<E>
         private int size;
 
         /**
-         * Constructs a sublist of an arbitrary ArrayList.
+         * 由一个任意的arrayList创建subList
          */
         public SubList(ArrayList<E> root, int fromIndex, int toIndex) {
             this.root = root;
@@ -1092,7 +1083,7 @@ public class ArrayList<E> extends AbstractList<E>
         }
 
         /**
-         * Constructs a sublist of another SubList.
+         * 由一个subList构建另一个subList
          */
         private SubList(SubList<E> parent, int fromIndex, int toIndex) {
             this.root = parent.root;
@@ -1102,6 +1093,7 @@ public class ArrayList<E> extends AbstractList<E>
             this.modCount = root.modCount;
         }
 
+        //赋值 先校验size 校验修改次数 offset就是最开始list分割subList的index，这一步是为了把list修改
         public E set(int index, E element) {
             Objects.checkIndex(index, size);
             checkForComodification();
@@ -1109,18 +1101,21 @@ public class ArrayList<E> extends AbstractList<E>
             root.elementData[offset + index] = element;
             return oldValue;
         }
-
+		
+        //依然是查老列表
         public E get(int index) {
             Objects.checkIndex(index, size);
             checkForComodification();
             return root.elementData(offset + index);
         }
 
+        //返回size toIndex-formIndex
         public int size() {
             checkForComodification();
             return size;
         }
 
+        //add 仍然是老list加一个，并且更新size
         public void add(int index, E element) {
             rangeCheckForAdd(index);
             checkForComodification();
@@ -1128,6 +1123,7 @@ public class ArrayList<E> extends AbstractList<E>
             updateSizeAndModCount(1);
         }
 
+        //移除。。跟add相反
         public E remove(int index) {
             Objects.checkIndex(index, size);
             checkForComodification();
@@ -1136,16 +1132,19 @@ public class ArrayList<E> extends AbstractList<E>
             return result;
         }
 
+        //removeRange 也是正常操作 
         protected void removeRange(int fromIndex, int toIndex) {
             checkForComodification();
             root.removeRange(offset + fromIndex, offset + toIndex);
             updateSizeAndModCount(fromIndex - toIndex);
         }
 
+      
         public boolean addAll(Collection<? extends E> c) {
             return addAll(this.size, c);
         }
 
+        //先检查index,然后正常addAll
         public boolean addAll(int index, Collection<? extends E> c) {
             rangeCheckForAdd(index);
             int cSize = c.size();
@@ -1157,10 +1156,12 @@ public class ArrayList<E> extends AbstractList<E>
             return true;
         }
 
+        //参考如上replaceAllRange
         public void replaceAll(UnaryOperator<E> operator) {
             root.replaceAllRange(operator, offset, offset + size);
         }
 
+        //remove于retain相同 只是参数true/false的区别 
         public boolean removeAll(Collection<?> c) {
             return batchRemove(c, false);
         }
@@ -1188,6 +1189,7 @@ public class ArrayList<E> extends AbstractList<E>
             return modified;
         }
 
+        //依然是对原list操作
         public Object[] toArray() {
             checkForComodification();
             return Arrays.copyOfRange(root.elementData, offset, offset + size);
@@ -1245,6 +1247,7 @@ public class ArrayList<E> extends AbstractList<E>
             return listIterator();
         }
 
+        //listIterator也是，内容并无太大变化，因为都是对原List的操作
         public ListIterator<E> listIterator(int index) {
             checkForComodification();
             rangeCheckForAdd(index);
@@ -1389,18 +1392,21 @@ public class ArrayList<E> extends AbstractList<E>
             } while (slist != null);
         }
 
+        /**
+         * java8新加的接口，目的是为了stream流进行更小粒度的划分
+         */
         public Spliterator<E> spliterator() {
             checkForComodification();
 
             // ArrayListSpliterator not used here due to late-binding
             return new Spliterator<E>() {
-                private int index = offset; // current index, modified on advance/split
-                private int fence = -1; // -1 until used; then one past last index
-                private int expectedModCount; // initialized when fence set
+                private int index = offset; // 当前索引, modified on advance/split
+                private int fence = -1; // 前一个索引，初始化为-1 即index(0)的前一个; then one past last 									   //index
+                private int expectedModCount; // 初始化修改次数 initialized when fence set
 
-                private int getFence() { // initialize fence to size on first use
-                    int hi; // (a specialized variant appears in method forEach)
-                    if ((hi = fence) < 0) {
+                private int getFence() { // 首次使用时初始化
+                    int hi; // (forEach方法中出现一个专门的变体(?))
+                    if ((hi = fence) < 0) { // -1即第一次使用的时候
                         expectedModCount = modCount;
                         hi = fence = offset + size;
                     }
@@ -1408,12 +1414,17 @@ public class ArrayList<E> extends AbstractList<E>
                 }
 
                 public ArrayList<E>.ArrayListSpliterator trySplit() {
+                    //逻辑右移，无论该数为正还是为负，右移之后左边都是补上0
                     int hi = getFence(), lo = index, mid = (lo + hi) >>> 1;
-                    // ArrayListSpliterator can be used here as the source is already bound
-                    return (lo >= mid) ? null : // divide range in half unless too small
+                    // ArrayListSpliterator可以在这用 source已经bound 
+                    return (lo >= mid) ? null : // 区分两半，除非粒度已经太小了
                         root.new ArrayListSpliterator(lo, index = mid, expectedModCount);
                 }
 
+                /**
+                 * 用来判断当前是否还有剩余元素
+                 * 参数 Comsumer接口的实例
+                 */
                 public boolean tryAdvance(Consumer<? super E> action) {
                     Objects.requireNonNull(action);
                     int hi = getFence(), i = index;
@@ -1428,6 +1439,11 @@ public class ArrayList<E> extends AbstractList<E>
                     return false;
                 }
 
+                /**
+                 * 对每一个元素都执行Consumer的action行为
+                 * 首先判断原list是否为空，然后是否第一次调用 fence是否为-1，是的话更新hi 不然mc
+                 * 赋值为已经改变了的modifyCount，然后判断当前index是否在list范围中,执行操作 否则跳出
+                 */
                 public void forEachRemaining(Consumer<? super E> action) {
                     Objects.requireNonNull(action);
                     int i, hi, mc; // hoist accesses and checks from loop
@@ -1452,10 +1468,12 @@ public class ArrayList<E> extends AbstractList<E>
                     throw new ConcurrentModificationException();
                 }
 
+                //还有多少元素要处理
                 public long estimateSize() {
                     return getFence() - index;
                 }
-
+				
+                //返回类型
                 public int characteristics() {
                     return Spliterator.ORDERED | Spliterator.SIZED | Spliterator.SUBSIZED;
                 }
@@ -1464,6 +1482,7 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
+     * 抛出空指针异常 forEach循环，执行action 
      * @throws NullPointerException {@inheritDoc}
      */
     @Override
@@ -1479,9 +1498,7 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Creates a <em><a href="Spliterator.html#binding">late-binding</a></em>
-     * and <em>fail-fast</em> {@link Spliterator} over the elements in this
-     * list.
+     * 在列表中创建一个late-binding于fail-fast Spliterator
      *
      * <p>The {@code Spliterator} reports {@link Spliterator#SIZED},
      * {@link Spliterator#SUBSIZED}, and {@link Spliterator#ORDERED}.
@@ -1496,52 +1513,38 @@ public class ArrayList<E> extends AbstractList<E>
         return new ArrayListSpliterator(0, -1, 0);
     }
 
-    /** Index-based split-by-two, lazily initialized Spliterator */
+    /** Index-based split-by-two, 延迟初始化的 Spliterator  */
     final class ArrayListSpliterator implements Spliterator<E> {
 
         /*
-         * If ArrayLists were immutable, or structurally immutable (no
-         * adds, removes, etc), we could implement their spliterators
-         * with Arrays.spliterator. Instead we detect as much
-         * interference during traversal as practical without
-         * sacrificing much performance. We rely primarily on
-         * modCounts. These are not guaranteed to detect concurrency
-         * violations, and are sometimes overly conservative about
-         * within-thread interference, but detect enough problems to
-         * be worthwhile in practice. To carry this out, we (1) lazily
-         * initialize fence and expectedModCount until the latest
-         * point that we need to commit to the state we are checking
-         * against; thus improving precision.  (This doesn't apply to
-         * SubLists, that create spliterators with current non-lazy
-         * values).  (2) We perform only a single
-         * ConcurrentModificationException check at the end of forEach
-         * (the most performance-sensitive method). When using forEach
-         * (as opposed to iterators), we can normally only detect
-         * interference after actions, not before. Further
-         * CME-triggering checks apply to all other possible
-         * violations of assumptions for example null or too-small
-         * elementData array given its size(), that could only have
-         * occurred due to interference.  This allows the inner loop
-         * of forEach to run without any further checks, and
-         * simplifies lambda-resolution. While this does entail a
-         * number of checks, note that in the common case of
-         * list.stream().forEach(a), no checks or other computation
-         * occur anywhere other than inside forEach itself.  The other
-         * less-often-used methods cannot take advantage of most of
-         * these streamlinings.
+         * 如果列表是不可变的, 或者结构上是不可变的,我们可以用Arrays.spliterator实现拆分
+         * 然后尽可能多的检测，而不会牺牲太多性能。
+         * 主要依靠modCounts。
+         * 这些并不能检测并发冲突，有时候对线程干扰过于保守，但多检测一点是好的
+         * 为了实现，我们首先懒加载 fence和expectedModCount，知道我们需要提交到检查状态的最新点
+         * 提高精度(不适用于subList，他们是non-lazy value)
+         * 我们执行一个ConcurrentModificationException在forEach结束的时候(性能最敏感)
+         * 当使用forEach(与迭代器相反)，我们在操作之后检测，而非之前
+         * 进一步的ConcurrentModificationException检测适用于其他违反假设的情况，例如null或者比给定size()
+         * 小很多的elementDate数组，由于干扰而发生(这块其实没太懂)
+         * 这允许forEach内部循环无需近一步检查执行，简化了lambda解析
+         * 虽然这确实需要一些检查，但 list.stream().forEach(a) 常见情况下，除了forEach本身，不会在其他地方
+         * 检查或计算
+         * 其他不太常用的就用不到了
          */
 
-        private int index; // current index, modified on advance/split
-        private int fence; // -1 until used; then one past last index
-        private int expectedModCount; // initialized when fence set
+        private int index; // 当前 index, modified on advance/split
+        private int fence; // 不用为-1，否则为前一个索引
+        private int expectedModCount; // set fence的时候初始化
 
-        /** Creates new spliterator covering the given range. */
+        /** 给定的range创建一个新spliterator*/
         ArrayListSpliterator(int origin, int fence, int expectedModCount) {
             this.index = origin;
             this.fence = fence;
             this.expectedModCount = expectedModCount;
         }
 
+        //与之前的基本相同
         private int getFence() { // initialize fence to size on first use
             int hi; // (a specialized variant appears in method forEach)
             if ((hi = fence) < 0) {
@@ -1605,14 +1608,25 @@ public class ArrayList<E> extends AbstractList<E>
         }
     }
 
-    // A tiny bit set implementation
+    // 一些bit实现
 
+    // 1-64内的返回1
     private static long[] nBits(int n) {
         return new long[((n - 1) >> 6) + 1];
     }
+    /**
+     * 用 long 类型数组，一个 long 64 位，就存64个位置的状态。
+     * 看removeIf代码，符合条件的都会setBit，传入的条件i-beg 就是满足删除条件的索引与第一个满足索引的隔了多少
+     * 元素 进入setBit 先看这个元素位于哪，bits[]
+     * 就比如deathRow = 1L 那么为0000000000........00001
+     * setBit后进行|=, 比如索引是5 第一个满足条件的是2 那么变成了0000000000........00101 这样64位直接存储
+     * 那些需要被删的
+     */
+   
     private static void setBit(long[] bits, int i) {
         bits[i >> 6] |= 1L << i;
     }
+   
     private static boolean isClear(long[] bits, int i) {
         return (bits[i >> 6] & (1L << i)) == 0;
     }
@@ -1626,14 +1640,15 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Removes all elements satisfying the given predicate, from index
+     * 移除满足filter的元素
      * i (inclusive) to index end (exclusive).
      */
     boolean removeIf(Predicate<? super E> filter, int i, final int end) {
+        //校验是否为空
         Objects.requireNonNull(filter);
         int expectedModCount = modCount;
         final Object[] es = elementData;
-        // Optimize for initial run of survivors
+        // 找到第一个符合条件的
         for (; i < end && !filter.test(elementAt(es, i)); i++)
             ;
         // Tolerate predicates that reentrantly access the collection for
@@ -1641,14 +1656,17 @@ public class ArrayList<E> extends AbstractList<E>
         // elements to delete, a second pass to physically expunge.
         if (i < end) {
             final int beg = i;
+            //找到满足条件的，deathRow进行存储
             final long[] deathRow = nBits(end - beg);
             deathRow[0] = 1L;   // set bit 0
             for (i = beg + 1; i < end; i++)
+                //找到所有符合条件的
                 if (filter.test(elementAt(es, i)))
                     setBit(deathRow, i - beg);
             if (modCount != expectedModCount)
                 throw new ConcurrentModificationException();
             modCount++;
+            //删除工作
             int w = beg;
             for (i = beg; i < end; i++)
                 if (isClear(deathRow, i - beg))
@@ -1692,5 +1710,8 @@ public class ArrayList<E> extends AbstractList<E>
         // assert size >= 0;
         // assert size == elementData.length || elementData[size] == null;
     }
+    
+    // 9.20更新完了 没参考其他blog
+    // 看一遍他人写的再结合自己写的 https://juejin.cn/post/7019088552990343198
 }
 ```
