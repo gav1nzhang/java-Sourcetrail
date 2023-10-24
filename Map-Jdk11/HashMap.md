@@ -80,7 +80,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      * resizing granularity. Ignoring variance, the expected
      * occurrences of list size k are (exp(-0.5) * pow(0.5, k) /
      * factorial(k)). The first values are:
-     *
+     * 泊松分布
      * 0:    0.60653066
      * 1:    0.30326533
      * 2:    0.07581633
